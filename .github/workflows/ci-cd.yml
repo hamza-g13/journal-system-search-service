@@ -50,6 +50,7 @@ jobs:
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/search-service:${{ github.sha }}
             ${{ secrets.DOCKERHUB_USERNAME }}/search-service:latest
+      
 
       - name: Trigger Redeploy in KTH Cloud
         run: |
