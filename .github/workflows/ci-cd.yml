@@ -1,4 +1,4 @@
-name: Search Service CI/CD
+name: Auth Service CI/CD
 
 on:
   push:
@@ -11,30 +11,26 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Set up JDK 21
+
+      - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
-          java-version: '21'
+          java-version: '17'
           distribution: 'temurin'
           cache: maven
-      - name: Run Unit Tests
+
+      - name: Run Tests
         run: mvn test
 
   build-and-deploy:
     needs: test
-    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
-        with:
-          java-version: '21'
-          distribution: 'temurin'
-          cache: maven
 
-      - name: Build Application (Quarkus)
-        run: mvn clean package -DskipTests -Dquarkus.container-image.build=false
+      - name: Build with Maven
+        run: mvn clean package -DskipTests
 
       - name: Login to Docker Hub
         uses: docker/login-action@v3
@@ -48,15 +44,13 @@ jobs:
           context: .
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/search-service:${{ github.sha }}
-            ${{ secrets.DOCKERHUB_USERNAME }}/search-service:latest
-      
+            ${{ secrets.DOCKERHUB_USERNAME }}/journal-system-user-service:${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/journal-system-user-service:latest
 
       - name: Trigger Redeploy in KTH Cloud
         run: |
-          # OBS! Ersätt DEPLOYMENT_ID nedan med ditt ID för search-service när du skapat den
-          # curl -X POST https://api.cloud.cbh.kth.se/deploy/v2/deployments/DEPLOYMENT_ID/command \
-          # -H "X-Api-Key: ${{ secrets.KTH_CLOUD_API_KEY }}" \
-          # -H "Content-Type: application/json" \
-          # -d '{"command": "restart"}'
-          echo "Redeploy step skipped until deployment ID is known"
+          # Byt ut DEPLOYMENT_ID nedan mot ditt riktiga ID för Auth Service!
+          curl -X POST "https://api.cloud.cbh.kth.se/deploy/v2/deployments/DEPLOYMENT_ID_FOR_AUTH/command" \
+          -H "X-Api-Key: ${{ secrets.KTH_CLOUD_API_KEY }}" \
+          -H "Content-Type: application/json" \
+          -d '{"command": "restart"}'
